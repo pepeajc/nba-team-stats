@@ -7,36 +7,8 @@ import { StatsHeader } from "@/components/stats-header"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { DateNavigator } from "@/components/date-navigator"
 import { MainNav } from "@/components/main-nav"
-
-interface Game {
-  gameId: string
-  gameETag: string
-  gameStatus: number
-  gameStatusText: string
-  period: number
-  gameClock: string
-  gameTimeUTC: string
-  regulationPeriods: number
-  seriesGameNumber: string
-  seriesText: string
-  shortName: string
-  homeTeam: {
-    teamId: string
-    teamName: string
-    teamTricode: string
-    wins: number
-    losses: number
-    score: number
-  }
-  awayTeam: {
-    teamId: string
-    teamName: string
-    teamTricode: string
-    wins: number
-    losses: number
-    score: number
-  }
-}
+import { formatESPNGames } from "@/lib/utils"
+import { Game } from "@/components/types"
 
 export default function Home() {
   const [games, setGames] = useState<Game[]>([])
@@ -60,7 +32,7 @@ export default function Home() {
         console.log(dateStr, "fetching NBA games")
 
         const response = await fetch(
-          `https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}&region=us&lang=en`,
+          `https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateStr}&region=us&lang=es`,
         )
 
         if (!response.ok) {
@@ -138,60 +110,4 @@ export default function Home() {
       </div>
     </main>
   )
-}
-
-function formatESPNGames(events: any[]): Game[] {
-  return events
-    .map((event) => {
-      const competition = event.competitions?.[0]
-      if (!competition) return null
-
-      const homeTeam = competition.competitors?.find((c: any) => c.homeAway === "home")
-      const awayTeam = competition.competitors?.find((c: any) => c.homeAway === "away")
-
-      if (!homeTeam || !awayTeam) return null
-
-      const status = event.status?.type?.name || "scheduled"
-      let gameStatus = 1
-      let gameStatusText = "Scheduled"
-
-      if (status.includes("live") || status.includes("in_progress")) {
-        gameStatus = 2
-        gameStatusText = "In Progress"
-      } else if (status.includes("final") || status.includes("completed")) {
-        gameStatus = 3
-        gameStatusText = "Final"
-      }
-
-      return {
-        gameId: event.id,
-        gameETag: `"${event.id}"`,
-        gameStatus,
-        gameStatusText,
-        period: competition.status?.period || 0,
-        gameClock: competition.status?.displayClock || "0:00",
-        gameTimeUTC: event.date || new Date().toISOString(),
-        regulationPeriods: 4,
-        seriesGameNumber: "1",
-        seriesText: "",
-        shortName: event.shortName || "",
-        homeTeam: {
-          teamId: homeTeam.team?.id,
-          teamName: homeTeam.team?.name || "",
-          teamTricode: homeTeam.team?.abbreviation || "",
-          wins: homeTeam.records?.[0]?.wins || 0,
-          losses: homeTeam.records?.[0]?.losses || 0,
-          score: Number.parseInt(homeTeam.score || "0"),
-        },
-        awayTeam: {
-          teamId: awayTeam.team?.id,
-          teamName: awayTeam.team?.name || "",
-          teamTricode: awayTeam.team?.abbreviation || "",
-          wins: awayTeam.records?.[0]?.wins || 0,
-          losses: awayTeam.records?.[0]?.losses || 0,
-          score: Number.parseInt(awayTeam.score || "0"),
-        },
-      }
-    })
-    .filter((game): game is Game => game !== null)
 }

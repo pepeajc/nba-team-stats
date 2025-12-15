@@ -6,31 +6,37 @@ import { Card } from "@/components/ui/card";
 import { MainNav } from "@/components/main-nav";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { ArrowLeft } from "lucide-react";
-import { getJSONField } from "@/lib/utils";
+import { formatESPNScores } from "@/lib/utils";
+import { Scoreboard } from "@/components/ScoreBoard";
+import { ScoreboardProps } from "@/components/ScoreBoard/types";
 
-type PlayerData = {
-  displayName?: string;
-  age?: number;
-  position?: {
-    displayName?: string;
-  };
-  // add other properties as needed
-};
+
+function getJSONField(obj: any, field: string): any {
+  if (obj && typeof obj === "object") {
+    if (field in obj) return obj[field];
+
+    for (const key in obj) {
+      const result = getJSONField(obj[key], field);
+      if (result !== undefined) return result;
+    }
+  }
+}
 
 export default function playerPage() {
-  const playerId = localStorage.getItem("player_id") as string;
+  const teamId = localStorage.getItem("team_id") as string;
   const [loading, setLoading] = useState(true);
-  const [parsedData, setParsedData] = useState<PlayerData | null>(null);
+  const [parsedData, setParsedData] = useState<ScoreboardProps[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBoxScore = async () => {
       try {
         setLoading(true);
-        console.log("[v0] Fetching box score for playerId:", playerId);
+        console.log("[v0] Fetching box score for teamId:", teamId);
 
         const response = await fetch(
-          `https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes/${playerId}`
+
+          `https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/teams/${teamId}/schedule`
         );
 
         if (!response.ok) {
@@ -38,9 +44,27 @@ export default function playerPage() {
         }
 
         const data = await response.json();
-        console.log("[v0] Box score API response:", data);
 
-        setParsedData(data);
+
+        const last10Matchs = data.events.filter((e: any) =>
+            e.competitions[0].status.type.name === "STATUS_FINAL"
+        ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
+
+        let parsedMatchs: any[] = [];
+
+        for (const match of last10Matchs) {
+            const response = await fetch(
+                `https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${match.id}`
+            );
+            const matchData = await response.json();
+            parsedMatchs.push(matchData);
+        }
+
+        // console.log("[v0] Box score API response:", parsedMatchs);
+
+        // console.log("[v0] Box score API response:", formatESPNScores(parsedMatchs));
+
+        setParsedData(formatESPNScores(parsedMatchs));
         setError(null);
       } catch (err) {
         console.log("[v0] Error fetching box score:", err);
@@ -51,7 +75,7 @@ export default function playerPage() {
     };
 
     fetchBoxScore();
-  }, [playerId]);
+  }, [teamId]);
 
   if (loading) {
     return (
@@ -96,45 +120,7 @@ export default function playerPage() {
           <ArrowLeft size={20} />
           Volver a partidos
         </Link>
-        <Card className="p-8 bg-gradient-to-r from-slate-800/50 to-slate-700/50 border-slate-700 mb-8">
-          <div className="grid grid-cols-1 gap-1 justify-items-center">
-            {/* Away Team */}
-            <p className="text-slate-400 text-sm mb-2">JUGADOR</p>
-            <img
-              src={getJSONField(parsedData, "headshot")?.href}
-              alt={parsedData?.displayName}
-              className="w-50 h-50 object-cover rounded-[100%] border-amber-300 border-4"
-            />
-            <h2 className="text-3xl font-bold text-white mb-2">
-              {parsedData?.displayName}
-            </h2>
-            <p className="text-5xl font-bold text-yellow-400">
-              {parsedData?.position?.displayName}
-            </p>
-            <p className="text-5xl font-bold text-yellow-400">
-              {getJSONField(parsedData, "jersey")}
-            </p>
-          </div>
-        </Card>
-        {/* Game Info */}
-        <div className="text-center">
-          <p className="text-slate-400 text-sm">
-            Edad: {getJSONField(parsedData, "age")}
-          </p>
-          <p className="text-slate-400 text-sm">
-            Años activo: {getJSONField(parsedData, "years")}
-          </p>
-          <p className="text-slate-400 text-sm">
-            Años debut: {getJSONField(parsedData, "debutYear")}
-          </p>
-          <p className="text-slate-300 text-xs mt-1">
-            Altura: {getJSONField(parsedData, "displayHeight")}
-          </p>
-          <p className="text-slate-300 text-xs mt-1">
-            Peso: {getJSONField(parsedData, "displayWeight")}
-          </p>
-          <p>Pais: {getJSONField(parsedData, "country")}</p>
-        </div>
+        {parsedData && parsedData.map(game => <Scoreboard key={game.gameId} {...game} />)}
       </div>
     </main>
   );

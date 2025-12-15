@@ -3,7 +3,7 @@
 import { getSlugName } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
-type PageType = "game" | "player";
+type PageType = "game" | "player" | "team";
 
 interface NavigateOptions {
   type: PageType;
@@ -16,7 +16,7 @@ export function useRouteStorage() {
 
   const setStorageForType = (type: PageType, id: string) => {
     try {
-      const key = type === "player" ? "player_id" : "game_id";
+      const key = type === "player" ? "player_id" : type === "game" ? "game_id" : "team_id";
       localStorage.setItem(key, id);
     } catch (e) {
       // noop: localStorage might be unavailable (SSR or privacy mode)
@@ -40,6 +40,8 @@ export function useRouteStorage() {
       router.push(`/players/${slug}`);
     } else if (type === "game") {
       router.push(`/games/${id}`);
+    } else if (type === "team" && slug) {
+      router.push(`/teams/${slug}`);
     }
   };
 
