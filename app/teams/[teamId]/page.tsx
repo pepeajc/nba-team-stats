@@ -46,13 +46,13 @@ export default function playerPage() {
         const data = await response.json();
 
 
-        const last10Matchs = data.events.filter((e: any) =>
+        const lastMatchs = data.events.filter((e: any) =>
             e.competitions[0].status.type.name === "STATUS_FINAL"
-        ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
+        ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6);
 
         let parsedMatchs: any[] = [];
 
-        for (const match of last10Matchs) {
+        for (const match of lastMatchs) {
             const response = await fetch(
                 `https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${match.id}`
             );

@@ -25,7 +25,7 @@ export function useRouteStorage() {
 
   const goToPlayer = (playerId: string, slug: string) => {
     setStorageForType("player", playerId);
-    
+    console.log('Navigating to player with slug:', slug);
     router.push(`/players/${getSlugName('player', slug)}`);
   };
 

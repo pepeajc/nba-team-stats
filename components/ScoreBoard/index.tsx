@@ -3,6 +3,41 @@ import { useRouteStorage } from "@/hooks/use-route-storage";
 import Link from "next/link";
 import { ScoreboardProps } from "./types";
 
+const TeamContent = ({
+    teamName,
+    score,
+    isWiner,
+    localLabel,
+    logo,
+}: {
+    teamName: string;
+    score: number;
+    isWiner: boolean;
+    localLabel: string;
+    logo: string;
+}) => {
+    return (
+        <div className="flex flex-col items-center">
+            <p className="text-xs text-slate-400 mb-1">{localLabel}</p>
+            <div className="flex">
+                <img
+                    src={logo}
+                    alt={teamName}
+                    className="w-8 h-8 object-contain mr-2"
+                />
+                <h3 className="text-lg font-bold text-white">{teamName}</h3>
+            </div>
+            <p
+                className={`text-4xl font-bold ${
+                    isWiner ? "text-yellow-400" : "text-slate-400"
+                }`}
+            >
+                {score}
+            </p>
+        </div>
+    );
+};
+
 export function Scoreboard({
     homeTeam,
     awayTeam,
@@ -18,9 +53,6 @@ export function Scoreboard({
         hour12: true,
     });
 
-    // You may need to define homeWon if used, e.g.:
-    const homeWon = homeTeam.score > awayTeam.score;
-
     return (
         <Link
             href={`/games/${gameId}`}
@@ -29,60 +61,23 @@ export function Scoreboard({
                 goToGame(gameId, shortName);
             }}
         >
-            <Card
-                className="p-6 border transition-all cursor-pointer hover:border-blue-500/50 hover:bg-slate-800/70"
-            >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Away Team */}
-                    <div className="flex flex-col justify-between">
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                                <p className="text-xs text-slate-400 mb-1">
-                                    VISITANTE
-                                </p>
-                                <h3 className="text-lg font-bold text-white">
-                                    {awayTeam.teamName}
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    {awayTeam.wins}W - {awayTeam.losses}L
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-4xl font-bold">
-                                    {awayTeam.score}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Home Team */}
-                    <div className="flex flex-col justify-between">
-                        <div className="flex items-start justify-between mb-4">
-                            <div
-                                className={`text-right flex-1 ${
-                                    homeWon
-                                        ? "text-yellow-400"
-                                        : "text-slate-400"
-                                }`}
-                            >
-                                <p className="text-4xl font-bold">
-                                    {homeTeam.score}
-                                </p>
-                            </div>
-                            <div className="text-right flex-1">
-                                <p className="text-xs text-slate-400 mb-1">
-                                    LOCAL
-                                </p>
-                                <h3 className="text-lg font-bold text-white text-right">
-                                    {homeTeam.teamName}
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-1 text-right">
-                                    {homeTeam.wins}W - {homeTeam.losses}L
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <Card className="p-6 border transition-all cursor-pointer mb-5 bg-slate-700/70
+             hover:border-slate-700/70 hover:bg-slate-800/70 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <TeamContent
+                    teamName={awayTeam.teamName}
+                    score={awayTeam.score}
+                    isWiner={awayTeam.score > homeTeam.score}
+                    localLabel="VISITANTE"
+                    logo={awayTeam.logo}
+                />
+                <time className="flex justify-center items-center">{gameTime}</time>
+                <TeamContent
+                    teamName={homeTeam.teamName}
+                    score={homeTeam.score}
+                    isWiner={homeTeam.score > awayTeam.score}
+                    localLabel="LOCAL"
+                    logo={homeTeam.logo}
+                />
             </Card>
         </Link>
     );
