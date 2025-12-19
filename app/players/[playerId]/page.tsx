@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getPlayerIdByName } from "@/api/services/getPlayerData";
 import { Player } from "@/components/Player";
 import { getShortName } from "@/lib/utils";
+import { getTeamByName } from "@/api/services/getTeamData";
 
 type PlayerData = {
     displayName?: string;
@@ -22,6 +23,8 @@ export default async function playerPage({
     const { playerId } = await params
     const playerShortName = getShortName('player', playerId);
     const playerData = await getPlayerIdByName(playerShortName);
+
+    const teamData = await getTeamByName('Detroit Pistons');
 
     return (
         <main className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
